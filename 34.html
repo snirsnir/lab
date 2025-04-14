@@ -445,48 +445,48 @@
     <script>
         // Function to calculate the next activity time
         function calculateNextActivityTime(currentHour, currentMinute) {
-            // זמני הפעילות לכל מעבדה
-            const lab1TargetMinute = 0; // שעה עגולה - נשאר כמו שהיה
-            const lab2TargetMinute = 0; // שינוי מ-20 דקות לשעה עגולה
+            // זמני הפעילות לכל מעבדה - שתיהן שעות עגולות
+            const targetMinute = 0; // שעה עגולה
             
             // בדיקה האם אנחנו בטווח של "עכשיו" (3 דקות סביב הזמן המדויק)
-            let lab1Status = { isNow: false, nextHour: currentHour, nextMinute: lab1TargetMinute };
-            let lab2Status = { isNow: false, nextHour: currentHour, nextMinute: lab2TargetMinute };
+            let lab1Status = { isNow: false, nextHour: currentHour, nextMinute: targetMinute };
+            let lab2Status = { isNow: false, nextHour: currentHour, nextMinute: targetMinute };
             
-            // למעבדה 3 (בדקה 00 - שעה עגולה)
-            if (currentMinute >= lab1TargetMinute + 3) {
-                // מעבר לשעה הבאה אם כבר עברנו את החלון
-                lab1Status.nextHour = currentHour + 1;
-            } else if (currentMinute >= lab1TargetMinute && currentMinute <= lab1TargetMinute + 2) {
-                // בטווח של 3 דקות (0-2), מסמן כ"עכשיו"
+            // למעבדה 3 (שעה עגולה - נשאר כפי שהיה)
+            // בדיקת טווח "עכשיו" - 3 דקות סביב השעה העגולה (59-01)
+            if (currentMinute >= 59 || currentMinute <= 1) {
                 lab1Status.isNow = true;
-            }
-            
-            // למעבדה 4 (מ-XX:20 ל-YY:00 - שעה עגולה)
-            if (currentMinute < 15) {
-                // אם השעה לפני רבע שעה, השעה הבאה היא אותה שעה
-                lab2Status.nextHour = currentHour;
+                if (currentMinute >= 59) {
+                    // אם זה 59 דקות, התוצאה הבאה תהיה השעה הנוכחית + 1
+                    lab1Status.nextHour = currentHour + 1;
+                } else {
+                    // אם זה 00-01 דקות, התוצאה הבאה תהיה השעה הנוכחית
+                    lab1Status.nextHour = currentHour;
+                }
             } else {
-                // אם השעה אחרי או שווה לרבע שעה, השעה הבאה היא השעה הבאה
-                lab2Status.nextHour = currentHour + 1;
+                // אם אנחנו לא בטווח "עכשיו", מציג את השעה הבאה
+                lab1Status.nextHour = currentHour + 1;
             }
             
-            // בדיקה אם בטווח של "עכשיו" (3 דקות) למעבדה 4
-            if (currentMinute >= 58 || currentMinute <= 2) {
-                // אם אנחנו בתוך טווח של 3 דקות מסביב לשעה עגולה
-                // שים לב שעליך לבדוק גם מצב שבו דקות = 58-59 (מהשעה הקודמת)
-                if (currentMinute >= 58) {
-                    // אנו נמצאים בדקות 58-59 של השעה הנוכחית
-                    if (lab2Status.nextHour === currentHour + 1) {
-                        // אם השעה הבאה היא השעה הבאה, מסמן כ"עכשיו"
-                        lab2Status.isNow = true;
-                    }
-                } else if (currentMinute <= 2) {
-                    // אנו נמצאים בדקות 0-2 של השעה הנוכחית
-                    if (lab2Status.nextHour === currentHour) {
-                        // אם השעה הבאה היא השעה הנוכחית, מסמן כ"עכשיו"
-                        lab2Status.isNow = true;
-                    }
+            // למעבדה 4 (מ-XX:20 ל-XX:00 שעה עגולה)
+            // בדיקת טווח "עכשיו" - 3 דקות סביב השעה העגולה (59-01)
+            if (currentMinute >= 59 || currentMinute <= 1) {
+                lab2Status.isNow = true;
+                if (currentMinute >= 59) {
+                    // אם זה 59 דקות, התוצאה הבאה תהיה השעה הנוכחית + 1
+                    lab2Status.nextHour = currentHour + 1;
+                } else {
+                    // אם זה 00-01 דקות, התוצאה הבאה תהיה השעה הנוכחית
+                    lab2Status.nextHour = currentHour;
+                }
+            } else {
+                // כשלא בטווח "עכשיו"
+                if (currentMinute < 15) {
+                    // אם לפני XX:15, השעה הבאה היא השעה הנוכחית + 1 (שעה הבאה)
+                    lab2Status.nextHour = currentHour + 1;
+                } else {
+                    // אם אחרי XX:15, השעה הבאה היא השעה הנוכחית + 2 (שעתיים קדימה)
+                    lab2Status.nextHour = currentHour + 2;
                 }
             }
             
