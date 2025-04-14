@@ -388,7 +388,7 @@ body {
     <div class="header">
         <img src="technoda.png" alt="לוגו טכנודע" class="logo">
         <div class="current-time"><i class="fas fa-clock"></i> השעה: <span id="current-time">08:45</span></div>
-        <div class="header-title">מכוס מים למיקרוסקופ דיגיטלי</div>
+        <div class="header-title">מטיפת מים למיקרוסקופ</div>
     </div>
     
     <div class="content">
@@ -418,36 +418,53 @@ body {
         </div>
     </div>
     
+    <style>
+        /* תוספת של סגנון להבהוב "עכשיו" */
+        @keyframes blinkNow {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        .now-active {
+            color: #dc2626 !important; /* אדום */
+            animation: blinkNow 1.2s infinite !important;
+            font-size: 70px !important; /* גודל קצת יותר קטן */
+        }
+    </style>
+    
     <script>
         // Function to calculate the next activity time
         function calculateNextActivityTime(currentHour, currentMinute) {
-    // מעבדה 1 (שעה עגולה): פעילויות מתחילות בדקה 00
-    let lab1Hour = currentHour;
-    let lab1Minute = 0;
+    // זמני הפעילות לכל מעבדה
+    const lab1TargetMinute = 20;
+    const lab2TargetMinute = 40;
     
-    // אם הזמן הנוכחי עבר את ה-00 דקות, עבור לשעה הבאה
-    if (currentMinute >= 1) {
-        lab1Hour++;
+    // בדיקה האם אנחנו בטווח של "עכשיו" (3 דקות סביב הזמן המדויק)
+    let lab1Status = { isNow: false, nextHour: currentHour, nextMinute: lab1TargetMinute };
+    let lab2Status = { isNow: false, nextHour: currentHour, nextMinute: lab2TargetMinute };
+    
+    // למעבדה 1 (בדקה 20)
+    if (currentMinute >= lab1TargetMinute + 3) {
+        // מעבר לשעה הבאה אם כבר עברנו את החלון
+        lab1Status.nextHour = currentHour + 1;
+    } else if (currentMinute >= lab1TargetMinute - 1 && currentMinute <= lab1TargetMinute + 1) {
+        // בטווח של 3 דקות, מסמן כ"עכשיו"
+        lab1Status.isNow = true;
     }
     
-    // מעבדה 2 (ב-20 דקות): פעילויות מתחילות בדקה 20
-    let lab2Hour = currentHour;
-    let lab2Minute = 20;
-    
-    // אם הזמן הנוכחי עבר את ה-20 דקות, עבור לשעה הבאה
-    if (currentMinute >= 20) {
-        lab2Hour++;
+    // למעבדה 2 (בדקה 40)
+    if (currentMinute >= lab2TargetMinute + 3) {
+        // מעבר לשעה הבאה אם כבר עברנו את החלון
+        lab2Status.nextHour = currentHour + 1;
+    } else if (currentMinute >= lab2TargetMinute - 1 && currentMinute <= lab2TargetMinute + 1) {
+        // בטווח של 3 דקות, מסמן כ"עכשיו"
+        lab2Status.isNow = true;
     }
     
     return {
-        lab1: {
-            hour: lab1Hour,
-            minute: lab1Minute
-        },
-        lab2: {
-            hour: lab2Hour,
-            minute: lab2Minute
-        }
+        lab1: lab1Status,
+        lab2: lab2Status
     };
 }
         
@@ -466,33 +483,49 @@ body {
             document.getElementById('current-time').textContent = formatTime(currentHour, currentMinute);
             
             // Calculate next activity times
-            const nextTimes = calculateNextActivityTime(currentHour, currentMinute);
+            const labStatus = calculateNextActivityTime(currentHour, currentMinute);
             
-            // Update lab times
-// Update lab times - שים לב שהאיידי של האלמנטים לא משתנה, רק המידע שמוצג בהם
-document.getElementById('lab6-time').textContent = formatTime(nextTimes.lab2.hour, nextTimes.lab2.minute); // מעבדה 2 (ב-:20)
-document.getElementById('lab5-time').textContent = formatTime(nextTimes.lab1.hour, nextTimes.lab1.minute); // מעבדה 1 (בשעה עגולה)
+            // Get reference to the time elements
+            const lab1TimeElement = document.getElementById('lab5-time');
+            const lab2TimeElement = document.getElementById('lab6-time');
             
-            // Add animation to indicate time changed
-            const lab5Time = document.getElementById('lab5-time');
-            const lab6Time = document.getElementById('lab6-time');
+            // Update lab1 display
+            if (labStatus.lab1.isNow) {
+                lab1TimeElement.textContent = "עכשיו";
+                lab1TimeElement.classList.add('now-active');
+            } else {
+                lab1TimeElement.textContent = formatTime(labStatus.lab1.nextHour, labStatus.lab1.nextMinute);
+                lab1TimeElement.classList.remove('now-active');
+            }
             
-            lab5Time.style.animation = 'none';
-            lab6Time.style.animation = 'none';
+            // Update lab2 display
+            if (labStatus.lab2.isNow) {
+                lab2TimeElement.textContent = "עכשיו";
+                lab2TimeElement.classList.add('now-active');
+            } else {
+                lab2TimeElement.textContent = formatTime(labStatus.lab2.nextHour, labStatus.lab2.nextMinute);
+                lab2TimeElement.classList.remove('now-active');
+            }
             
-            // Trigger reflow
-            void lab5Time.offsetWidth;
-            void lab6Time.offsetWidth;
+            // Reset animations if not in "now" mode
+            if (!labStatus.lab1.isNow) {
+                lab1TimeElement.style.animation = 'none';
+                void lab1TimeElement.offsetWidth; // Trigger reflow
+                lab1TimeElement.style.animation = 'pulse 2s infinite';
+            }
             
-            lab5Time.style.animation = 'pulse 2s infinite';
-            lab6Time.style.animation = 'pulse 2s infinite';
+            if (!labStatus.lab2.isNow) {
+                lab2TimeElement.style.animation = 'none';
+                void lab2TimeElement.offsetWidth; // Trigger reflow
+                lab2TimeElement.style.animation = 'pulse 2s infinite';
+            }
         }
         
         // Initial update
         updateTimes();
         
-        // Update every minute
-        setInterval(updateTimes, 60000);
+        // Update every 10 seconds to be more responsive to time changes
+        setInterval(updateTimes, 10000);
     </script>
 </body>
 </html>
